@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Климат-Сканер — Диагностика конфликтогенности</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #2d3748;
+            font-size: 22px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .icon-input {
+            background: #e3f2fd;
+        }
+        
+        .icon-result {
+            background: #e8f5e9;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+        }
+        
+        .result-display {
+            text-align: center;
+            padding: 30px;
+            background: #f7fafc;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .index-value {
+            font-size: 72px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .index-label {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        
+        .zone-indicator {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .zone-low {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .zone-medium {
+            background: #fef5e7;
+            color: #975a16;
+        }
+        
+        .zone-high {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .radar-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin-bottom: 25px;
+        }
+        
+        .recommendations {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .recommendations h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .recommendations ul {
+            list-style: none;
+        }
+        
+        .recommendations li {
+            padding: 8px 0;
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .recommendations li::before {
+            content: "→";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        canvas {
+            max-width: 100%;
+        }
+        
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Климат-Сканер</h1>
+            <p>Система раннего выявления конфликтогенных зон в школьном коллективе</p>
+        </div>
+        
+        <div class="content">
+            <!-- Левая колонка: Ввод данных -->
+            <div class="card">
+                <h2>
+                    <span class="icon icon-input">📝</span>
+                    Ввод данных
+                </h2>
+                
+                <div class="info-badge">Заполните 5 параметров</div>
+                
+                <form id="diagnosticForm">
+                    <div class="form-group">
+                        <label>1. Частота конфликтов за последний месяц</label>
+                        <select id="frequency" required>
+                            <option value="">Выберите значение</option>
+                            <option value="1">1 — Практически отсутствуют</option>
+                            <option value="2">2 — Редко (1-2 раза за месяц)</option>
+                            <option value="3">3 — Несколько раз в неделю</option>
+                            <option value="4">4 — Почти ежедневно</option>
+                            <option value="5">5 — Несколько раз в день</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>2. Психологическая атмосфера в классе</label>
+                        <select id="atmosphere" required>
+                            <option value="">Выберите значение</option>
+                            <option value="1">1 — Крайне напряжённая</option>
+                            <option value="2">2 — Скорее напряжённая</option>
+                            <option value="3">3 — Нейтральная</option>
+                            <option value="4">4 — Скорее дружелюбная</option>
+                            <option value="5">5 — Выраженно дружелюбная</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>3. Эмоциональное влияние конфликтов</label>
+                        <select id="emotional" required>
+                            <option value="">Выберите значение</option>
+                            <option value="1">1 — Практически не влияют</option>
+                            <option value="2">2 — Влияют незначительно</option>
+                            <option value="3">3 — Влияют умеренно</option>
+                            <option value="4">4 — Влияют сильно</option>
+                            <option value="5">5 — Критическое влияние</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>4. Справедливость разбирательств взрослыми</label>
+                        <select id="fairness" required>
+                            <option value="">Выберите значение</option>
+                            <option value="1">1 — Редко справедливо</option>
+                            <option value="2">2 — Иногда справедливо</option>
+                            <option value="3">3 — Обычно справедливо</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>5. Готовность учащихся к диалогу</label>
+                        <select id="dialogue" required>
+                            <option value="">Выберите значение</option>
+                            <option value="1">1 — Не готовы, избегают</option>
+                            <option value="2">2 — Готовы к диалогу</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-calculate">🔍 Рассчитать индекс</button>
+                </form>
+            </div>
+            
+            <!-- Правая колонка: Результаты -->
+            <div class="card">
+                <h2>
+                    <span class="icon icon-result">📊</span>
+                    Результаты диагностики
+                </h2>
+                
+                <div id="results" style="display: none;">
+                    <div class="result-display">
+                        <div class="index-label">Индекс конфликтности</div>
+                        <div class="index-value" id="indexValue">—</div>
+                        <span class="zone-indicator" id="zoneIndicator">—</span>
+                    </div>
+                    
+                    <div class="radar-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    
+                    <div class="recommendations" id="recommendations">
+                        <h3>💡 Рекомендации</h3>
+                        <ul id="recommendationList"></ul>
+                    </div>
+                </div>
+                
+                <div id="placeholder" style="text-align: center; padding: 80px 20px; color: #a0aec0;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">📈</div>
+                    <p style="font-size: 16px;">Заполните форму слева для получения результатов диагностики</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        let radarChart = null;
+        
+        document.getElementById('diagnosticForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const K1 = parseFloat(document.getElementById('frequency').value);
+            const atm = parseFloat(document.getElementById('atmosphere').value);
+            const K2 = 6 - atm;
+            const K3 = parseFloat(document.getElementById('emotional').value);
+            const fair = parseFloat(document.getElementById('fairness').value);
+            const K4 = 4 - fair;
+            const dial = parseFloat(document.getElementById('dialogue').value);
+            const K5 = 3 - dial;
+            
+            const IK = Math.round((K1 * 0.3 + K2 * 0.25 + K3 * 0.2 + K4 * 0.15 + K5 * 0.1) * 20);
+            
+            document.getElementById('indexValue').textContent = IK;
+            document.getElementById('indexValue').style.color = 
+                IK <= 30 ? '#38a169' : IK <= 60 ? '#d69e2e' : '#e53e3e';
+            
+            const zoneIndicator = document.getElementById('zoneIndicator');
+            if (IK <= 30) {
+                zoneIndicator.textContent = '🟢 Низкий риск';
+                zoneIndicator.className = 'zone-indicator zone-low';
+            } else if (IK <= 60) {
+                zoneIndicator.textContent = '🟡 Средний риск';
+                zoneIndicator.className = 'zone-indicator zone-medium';
+            } else {
+                zoneIndicator.textContent = '🔴 Высокий риск';
+                zoneIndicator.className = 'zone-indicator zone-high';
+            }
+            
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            updateRadarChart(K1, K2, K3, K4, K5);
+            updateRecommendations(IK, K1, K2, K3, K4, K5);
+        });
+        
+        function updateRadarChart(k1, k2, k3, k4, k5) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Частота конфликтов',
+                        'Напряжённость',
+                        'Эмоц. влияние',
+                        'Несправедливость',
+                        'Закрытость'
+                    ],
+                    datasets: [{
+                        label: 'Текущие значения',
+                        data: [k1, k2, k3, k4, k5],
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(102, 126, 234, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateRecommendations(ik, k1, k2, k3, k4, k5) {
+            const recList = document.getElementById('recommendationList');
+            recList.innerHTML = '';
+            
+            const recommendations = [];
+            
+            if (ik <= 30) {
+                recommendations.push('Поддерживайте существующий благоприятный климат');
+                recommendations.push('Проводите регулярные мероприятия для сплочения');
+                recommendations.push('Используйте опыт класса как пример для других');
+            } else if (ik <= 60) {
+                if (k1 >= 3) recommendations.push('Проведите тренинг по конструктивной коммуникации');
+                if (k2 >= 3) recommendations.push('Организуйте "круги общения" для обсуждения проблем');
+                if (k3 >= 3) recommendations.push('Обучите методам эмоциональной регуляции');
+                if (k4 >= 2) recommendations.push('Разработайте прозрачные правила разбора конфликтов');
+            } else {
+                recommendations.push('⚠️ Требуется срочная работа психолога с классом');
+                recommendations.push('Индивидуальные беседы с конфликтующими сторонами');
+                recommendations.push('Создание службы медиации с участием учащихся');
+                recommendations.push('Вовлечение родителей в профилактическую работу');
+            }
+            
+            recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                recList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
